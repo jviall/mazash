@@ -11,16 +11,32 @@
 		5869553C2F9C3BB000DA10FC /* ScreenCaptureKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5869553B2F9C3BB000DA10FC /* ScreenCaptureKit.framework */; };
 /* End PBXBuildFile section */
 
+/* Begin PBXContainerItemProxy section */
+		5869554B2F9C3ED500DA10FC /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 586955222F9C3B7800DA10FC /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 586955292F9C3B7900DA10FC;
+			remoteInfo = Mazash;
+		};
+/* End PBXContainerItemProxy section */
+
 /* Begin PBXFileReference section */
 		5869552A2F9C3B7900DA10FC /* Mazash.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Mazash.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		586955392F9C3BA600DA10FC /* ShazamKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ShazamKit.framework; path = System/Library/Frameworks/ShazamKit.framework; sourceTree = SDKROOT; };
 		5869553B2F9C3BB000DA10FC /* ScreenCaptureKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ScreenCaptureKit.framework; path = System/Library/Frameworks/ScreenCaptureKit.framework; sourceTree = SDKROOT; };
+		586955472F9C3ED500DA10FC /* MazashTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MazashTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		5869552C2F9C3B7900DA10FC /* Mazash */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = Mazash;
+			sourceTree = "<group>";
+		};
+		586955482F9C3ED500DA10FC /* MazashTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = MazashTests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -35,6 +51,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		586955442F9C3ED500DA10FC /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -42,6 +65,7 @@
 			isa = PBXGroup;
 			children = (
 				5869552C2F9C3B7900DA10FC /* Mazash */,
+				586955482F9C3ED500DA10FC /* MazashTests */,
 				586955382F9C3BA600DA10FC /* Frameworks */,
 				5869552B2F9C3B7900DA10FC /* Products */,
 			);
@@ -51,6 +75,7 @@
 			isa = PBXGroup;
 			children = (
 				5869552A2F9C3B7900DA10FC /* Mazash.app */,
+				586955472F9C3ED500DA10FC /* MazashTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -89,6 +114,29 @@
 			productReference = 5869552A2F9C3B7900DA10FC /* Mazash.app */;
 			productType = "com.apple.product-type.application";
 		};
+		586955462F9C3ED500DA10FC /* MazashTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 5869554F2F9C3ED500DA10FC /* Build configuration list for PBXNativeTarget "MazashTests" */;
+			buildPhases = (
+				586955432F9C3ED500DA10FC /* Sources */,
+				586955442F9C3ED500DA10FC /* Frameworks */,
+				586955452F9C3ED500DA10FC /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				5869554C2F9C3ED500DA10FC /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				586955482F9C3ED500DA10FC /* MazashTests */,
+			);
+			name = MazashTests;
+			packageProductDependencies = (
+			);
+			productName = MazashTests;
+			productReference = 586955472F9C3ED500DA10FC /* MazashTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -101,6 +149,10 @@
 				TargetAttributes = {
 					586955292F9C3B7900DA10FC = {
 						CreatedOnToolsVersion = 26.3;
+					};
+					586955462F9C3ED500DA10FC = {
+						CreatedOnToolsVersion = 26.3;
+						TestTargetID = 586955292F9C3B7900DA10FC;
 					};
 				};
 			};
@@ -119,12 +171,20 @@
 			projectRoot = "";
 			targets = (
 				586955292F9C3B7900DA10FC /* Mazash */,
+				586955462F9C3ED500DA10FC /* MazashTests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		586955282F9C3B7900DA10FC /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		586955452F9C3ED500DA10FC /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -141,7 +201,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		586955432F9C3ED500DA10FC /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		5869554C2F9C3ED500DA10FC /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 586955292F9C3B7900DA10FC /* Mazash */;
+			targetProxy = 5869554B2F9C3ED500DA10FC /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		586955332F9C3B7900DA10FC /* Debug */ = {
@@ -318,6 +393,42 @@
 			};
 			name = Release;
 		};
+		5869554D2F9C3ED500DA10FC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.local.mazash.MazashTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Mazash.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Mazash";
+			};
+			name = Debug;
+		};
+		5869554E2F9C3ED500DA10FC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.local.mazash.MazashTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Mazash.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Mazash";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -335,6 +446,15 @@
 			buildConfigurations = (
 				586955362F9C3B7900DA10FC /* Debug */,
 				586955372F9C3B7900DA10FC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		5869554F2F9C3ED500DA10FC /* Build configuration list for PBXNativeTarget "MazashTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				5869554D2F9C3ED500DA10FC /* Debug */,
+				5869554E2F9C3ED500DA10FC /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
