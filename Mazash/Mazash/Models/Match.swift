@@ -14,6 +14,8 @@ struct Match {
 
     static func formatLine(title: String, artist: String, date: Date) -> String {
         let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = .current
         formatter.dateFormat = "yyyy-MM-dd HH:mm"
         return "\(formatter.string(from: date)) | \(title) - \(artist)"
     }
