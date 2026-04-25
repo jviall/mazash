@@ -28,14 +28,16 @@ final class MatchStoreTests: XCTestCase {
     }
 
     func testAddMatchWritesToFile() throws {
+        // Use a fixed Gregorian calendar so this test is timezone-agnostic.
+        var cal = Calendar(identifier: .gregorian)
+        cal.timeZone = .current
         var components = DateComponents()
-        components.calendar = .current
         components.year = 2026
         components.month = 4
         components.day = 24
         components.hour = 10
         components.minute = 5
-        let date = Calendar.current.date(from: components)!
+        let date = cal.date(from: components)!
 
         let mediaItem = SHMediaItem(properties: [.title: "Test Song", .artist: "Test Artist"])
         let match = Match(timestamp: date, mediaItem: mediaItem)
