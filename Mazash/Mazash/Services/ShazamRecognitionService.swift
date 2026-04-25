@@ -1,6 +1,10 @@
 import ShazamKit
 import AVFoundation
 
+// process(buffer:) is called on SCKAudioCaptureService.sampleQueue (serial, background).
+// SHSessionDelegate callbacks arrive on a ShazamKit-internal queue.
+// reset() is called from the main thread via AppController.
+// All shared mutable state is protected by `lock`.
 final class ShazamRecognitionService: NSObject, RecognitionService {
     weak var delegate: RecognitionDelegate?
 
@@ -8,7 +12,9 @@ final class ShazamRecognitionService: NSObject, RecognitionService {
     private var generator = SHSignatureGenerator()
     private var lastMatchedShazamID: String?
     private var bufferedDuration: TimeInterval = 0
+    private var isMatchPending = false
     private let matchIntervalSeconds: TimeInterval = 10
+    private let lock = NSLock()
 
     override init() {
         super.init()
@@ -17,35 +23,51 @@ final class ShazamRecognitionService: NSObject, RecognitionService {
 
     func process(buffer: CMSampleBuffer) {
         guard let pcmBuffer = buffer.asPCMBuffer() else { return }
-        try? generator.append(pcmBuffer, at: nil)
-        bufferedDuration += CMSampleBufferGetDuration(buffer).seconds
 
-        if bufferedDuration >= matchIntervalSeconds {
-            attemptMatch()
-        }
+        // Derive duration from sample data rather than CMTime, which can return nan.
+        let bufferDuration = Double(pcmBuffer.frameLength) / pcmBuffer.format.sampleRate
+
+        lock.lock()
+        try? generator.append(pcmBuffer, at: nil)
+        bufferedDuration += bufferDuration
+        let shouldAttempt = bufferedDuration >= matchIntervalSeconds && !isMatchPending
+        lock.unlock()
+
+        if shouldAttempt { attemptMatch() }
     }
 
     func reset() {
+        lock.lock()
         generator = SHSignatureGenerator()
         bufferedDuration = 0
         lastMatchedShazamID = nil
+        isMatchPending = false
+        lock.unlock()
     }
 
     private func attemptMatch() {
+        lock.lock()
+        guard !isMatchPending else { lock.unlock(); return }
+        isMatchPending = true
         let signature = generator.signature()
         generator = SHSignatureGenerator()
         bufferedDuration = 0
+        lock.unlock()
+
         session.match(signature)
     }
 }
 
 extension ShazamRecognitionService: SHSessionDelegate {
     func session(_ session: SHSession, didFind match: SHMatch) {
-        guard let item = match.mediaItems.first else { return }
+        guard let item = match.mediaItems.first,
+              let newID = item.shazamID else { return }
 
-        // Suppress duplicate matches for the same song
-        guard item.shazamID != lastMatchedShazamID else { return }
-        lastMatchedShazamID = item.shazamID
+        lock.lock()
+        isMatchPending = false
+        guard newID != lastMatchedShazamID else { lock.unlock(); return }
+        lastMatchedShazamID = newID
+        lock.unlock()
 
         let result = Match(timestamp: Date(), mediaItem: item)
         delegate?.recognitionService(self, didFind: result)
@@ -56,7 +78,13 @@ extension ShazamRecognitionService: SHSessionDelegate {
         didNotFindMatchFor signature: SHSignature,
         error: (any Error)?
     ) {
-        // No match this window — continue accumulating audio
+        lock.lock()
+        isMatchPending = false
+        lock.unlock()
+
+        if let error {
+            print("[ShazamRecognitionService] no match: \(error)")
+        }
     }
 }
 
