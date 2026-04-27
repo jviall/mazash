@@ -2,11 +2,20 @@ import SwiftUI
 import AVFoundation
 
 @Observable
+@MainActor
 final class AppController: AudioCaptureDelegate, RecognitionDelegate {
     private(set) var isListening = false
-    let store = MatchStore()
+    private let store = MatchStore()
     private let captureService: any AudioCaptureService = SCKAudioCaptureService()
-    private let recognitionService: any RecognitionService = ShazamRecognitionService()
+    // nonisolated(unsafe): let binding never mutated after init; ShazamRecognitionService is
+    // internally thread-safe via NSLock, so cross-actor access from the audio callback is safe.
+    nonisolated(unsafe) private let recognitionService: any RecognitionService = ACRCloudRecognitionService(
+        host: ACRCloudConfig.host,
+        accessKey: ACRCloudConfig.accessKey,
+        accessSecret: ACRCloudConfig.accessSecret
+    )
+
+    var lastMatch: Match? { store.lastMatch }
 
     init() {
         captureService.delegate = self
@@ -14,18 +23,16 @@ final class AppController: AudioCaptureDelegate, RecognitionDelegate {
     }
 
     func toggle() {
-        if isListening {
-            stopListening()
-        } else {
-            Task { await startListening() }
-        }
+        guard !isListening else { stopListening(); return }
+        isListening = true
+        Task { await startListening() }
     }
 
     private func startListening() async {
         do {
             try await captureService.start()
-            await MainActor.run { isListening = true }
         } catch {
+            isListening = false
             print("Failed to start capture: \(error)")
         }
     }
@@ -38,19 +45,19 @@ final class AppController: AudioCaptureDelegate, RecognitionDelegate {
 
     // MARK: - AudioCaptureDelegate
 
-    func audioCaptureService(_ service: any AudioCaptureService, didCapture buffer: CMSampleBuffer) {
+    nonisolated func audioCaptureService(_ service: any AudioCaptureService, didCapture buffer: CMSampleBuffer) {
         recognitionService.process(buffer: buffer)
     }
 
-    func audioCaptureService(_ service: any AudioCaptureService, didFailWith error: Error) {
+    nonisolated func audioCaptureService(_ service: any AudioCaptureService, didFailWith error: Error) {
         print("Capture error: \(error)")
-        DispatchQueue.main.async { self.isListening = false }
+        Task { @MainActor in self.isListening = false }
     }
 
     // MARK: - RecognitionDelegate
 
-    func recognitionService(_ service: any RecognitionService, didFind match: Match) {
-        DispatchQueue.main.async { self.store.add(match) }
+    nonisolated func recognitionService(_ service: any RecognitionService, didFind match: Match) {
+        Task { @MainActor in self.store.add(match) }
     }
 }
 
@@ -63,5 +70,6 @@ struct MazashApp: App {
             MenuBarView()
                 .environment(controller)
         }
+        .menuBarExtraStyle(.menu)
     }
 }

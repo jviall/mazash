@@ -1,12 +1,9 @@
 import Foundation
-import ShazamKit
 
 struct Match {
     let timestamp: Date
-    let mediaItem: SHMediaItem
-
-    var title: String { mediaItem.title ?? "Unknown Title" }
-    var artist: String { mediaItem.artist ?? "Unknown Artist" }
+    let title: String
+    let artist: String
 
     var formattedLine: String {
         Match.formatLine(title: title, artist: artist, date: timestamp)

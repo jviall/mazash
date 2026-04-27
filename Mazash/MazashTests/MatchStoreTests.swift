@@ -1,5 +1,4 @@
 import XCTest
-import ShazamKit
 @testable import Mazash
 
 final class MatchStoreTests: XCTestCase {
@@ -20,8 +19,7 @@ final class MatchStoreTests: XCTestCase {
     }
 
     func testAddMatchAppendsToMemory() {
-        let mediaItem = SHMediaItem(properties: [.title: "Test Song", .artist: "Test Artist"])
-        let match = Match(timestamp: Date(), mediaItem: mediaItem)
+        let match = Match(timestamp: Date(), title: "Test Song", artist: "Test Artist")
         store.add(match)
         XCTAssertEqual(store.matches.count, 1)
         XCTAssertEqual(store.matches[0].title, "Test Song")
@@ -39,8 +37,7 @@ final class MatchStoreTests: XCTestCase {
         components.minute = 5
         let date = cal.date(from: components)!
 
-        let mediaItem = SHMediaItem(properties: [.title: "Test Song", .artist: "Test Artist"])
-        let match = Match(timestamp: date, mediaItem: mediaItem)
+        let match = Match(timestamp: date, title: "Test Song", artist: "Test Artist")
         store.add(match)
 
         let fileURL = tempDir.appendingPathComponent("matches.txt")
@@ -52,11 +49,9 @@ final class MatchStoreTests: XCTestCase {
     }
 
     func testMultipleMatchesAppend() throws {
-        let item1 = SHMediaItem(properties: [.title: "Song A", .artist: "Artist A"])
-        let item2 = SHMediaItem(properties: [.title: "Song B", .artist: "Artist B"])
         let date = Date()
-        store.add(Match(timestamp: date, mediaItem: item1))
-        store.add(Match(timestamp: date, mediaItem: item2))
+        store.add(Match(timestamp: date, title: "Song A", artist: "Artist A"))
+        store.add(Match(timestamp: date, title: "Song B", artist: "Artist B"))
 
         let fileURL = tempDir.appendingPathComponent("matches.txt")
         let lines = try String(contentsOf: fileURL, encoding: .utf8)
@@ -66,10 +61,8 @@ final class MatchStoreTests: XCTestCase {
     }
 
     func testLastMatchReturnsNewest() {
-        let item1 = SHMediaItem(properties: [.title: "Song A", .artist: "Artist A"])
-        let item2 = SHMediaItem(properties: [.title: "Song B", .artist: "Artist B"])
-        store.add(Match(timestamp: Date(), mediaItem: item1))
-        store.add(Match(timestamp: Date(), mediaItem: item2))
+        store.add(Match(timestamp: Date(), title: "Song A", artist: "Artist A"))
+        store.add(Match(timestamp: Date(), title: "Song B", artist: "Artist B"))
         XCTAssertEqual(store.lastMatch?.title, "Song B")
     }
 }

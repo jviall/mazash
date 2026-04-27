@@ -5,6 +5,10 @@ import AVFoundation
 // SHSessionDelegate callbacks arrive on a ShazamKit-internal queue.
 // reset() is called from the main thread via AppController.
 // All shared mutable state is protected by `lock`.
+//
+// NOTE: ShazamKit music recognition requires the ShazamKit App Service to be enabled
+// for the app's bundle ID in the Apple Developer portal (paid membership required).
+// Use ACRCloudRecognitionService for local/free use.
 final class ShazamRecognitionService: NSObject, RecognitionService {
     weak var delegate: RecognitionDelegate?
 
@@ -69,7 +73,11 @@ extension ShazamRecognitionService: SHSessionDelegate {
         lastMatchedShazamID = newID
         lock.unlock()
 
-        let result = Match(timestamp: Date(), mediaItem: item)
+        let result = Match(
+            timestamp: Date(),
+            title: item.title ?? "Unknown Title",
+            artist: item.artist ?? "Unknown Artist"
+        )
         delegate?.recognitionService(self, didFind: result)
     }
 
@@ -85,31 +93,5 @@ extension ShazamRecognitionService: SHSessionDelegate {
         if let error {
             print("[ShazamRecognitionService] no match: \(error)")
         }
-    }
-}
-
-// MARK: - CMSampleBuffer → AVAudioPCMBuffer conversion
-
-private extension CMSampleBuffer {
-    /// Converts a `CMSampleBuffer` (as delivered by ScreenCaptureKit) into an
-    /// `AVAudioPCMBuffer` suitable for `SHSignatureGenerator.append(_:at:)`.
-    func asPCMBuffer() -> AVAudioPCMBuffer? {
-        guard let formatDescription = CMSampleBufferGetFormatDescription(self),
-              let streamBasicDesc = CMAudioFormatDescriptionGetStreamBasicDescription(formatDescription)
-        else { return nil }
-
-        guard let avFormat = AVAudioFormat(streamDescription: streamBasicDesc) else { return nil }
-        let frameCount = AVAudioFrameCount(CMSampleBufferGetNumSamples(self))
-        guard let pcmBuffer = AVAudioPCMBuffer(pcmFormat: avFormat, frameCapacity: frameCount) else { return nil }
-        pcmBuffer.frameLength = frameCount
-
-        guard CMSampleBufferCopyPCMDataIntoAudioBufferList(
-            self,
-            at: 0,
-            frameCount: Int32(frameCount),
-            into: pcmBuffer.mutableAudioBufferList
-        ) == noErr else { return nil }
-
-        return pcmBuffer
     }
 }

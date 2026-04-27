@@ -63,3 +63,6 @@ fastlane/test_output
 
 # Git worktrees
 .worktrees/
+
+# Local secrets — copy Secrets.xcconfig.example → Secrets.xcconfig and fill in values
+Mazash/Secrets.xcconfig

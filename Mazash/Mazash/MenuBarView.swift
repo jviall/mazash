@@ -8,7 +8,7 @@ struct MenuBarView: View {
             controller.toggle()
         }
 
-        if let last = controller.store.lastMatch {
+        if let last = controller.lastMatch {
             Divider()
             Text("Last match:")
                 .foregroundStyle(.secondary)
