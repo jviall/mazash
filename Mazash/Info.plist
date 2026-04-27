@@ -28,5 +28,20 @@
 	<string>$(ACRCLOUD_ACCESS_KEY)</string>
 	<key>ACRCloudAccessSecret</key>
 	<string>$(ACRCLOUD_ACCESS_SECRET)</string>
+	<key>SpotifyClientId</key>
+	<string>$(SPOTIFY_CLIENT_ID)</string>
+	<key>SpotifyPlaylistId</key>
+	<string>$(SPOTIFY_PLAYLIST_ID)</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.local.mazash</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>mazash</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>

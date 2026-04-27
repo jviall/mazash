@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		5869553A2F9C3BA600DA10FC /* ShazamKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 586955392F9C3BA600DA10FC /* ShazamKit.framework */; };
 		5869553C2F9C3BB000DA10FC /* ScreenCaptureKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5869553B2F9C3BB000DA10FC /* ScreenCaptureKit.framework */; };
 /* End PBXBuildFile section */
 
@@ -23,7 +22,6 @@
 
 /* Begin PBXFileReference section */
 		5869552A2F9C3B7900DA10FC /* Mazash.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Mazash.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		586955392F9C3BA600DA10FC /* ShazamKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ShazamKit.framework; path = System/Library/Frameworks/ShazamKit.framework; sourceTree = SDKROOT; };
 		5869553B2F9C3BB000DA10FC /* ScreenCaptureKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = ScreenCaptureKit.framework; path = System/Library/Frameworks/ScreenCaptureKit.framework; sourceTree = SDKROOT; };
 		586955472F9C3ED500DA10FC /* MazashTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MazashTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		CD3047CF2CFB4260807DAF97 /* Secrets.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Secrets.xcconfig; sourceTree = SOURCE_ROOT; };
@@ -48,7 +46,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				5869553C2F9C3BB000DA10FC /* ScreenCaptureKit.framework in Frameworks */,
-				5869553A2F9C3BA600DA10FC /* ShazamKit.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -86,7 +83,6 @@
 			isa = PBXGroup;
 			children = (
 				5869553B2F9C3BB000DA10FC /* ScreenCaptureKit.framework */,
-				586955392F9C3BA600DA10FC /* ShazamKit.framework */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";

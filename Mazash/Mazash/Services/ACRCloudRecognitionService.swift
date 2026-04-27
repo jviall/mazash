@@ -196,9 +196,21 @@ final class ACRCloudRecognitionService: RecognitionService {
 
     private func handleResponse(data: Data) {
         struct Artist: Decodable { let name: String }
+        struct SpotifyTrack: Decodable { let id: String }
+        struct SpotifyMeta: Decodable { let track: SpotifyTrack? }
+        struct YouTubeMeta: Decodable { let vid: String }
+        struct ExternalMetadata: Decodable {
+            let spotify: SpotifyMeta?
+            let youtube: YouTubeMeta?
+        }
         struct MusicItem: Decodable {
             let title: String
             let artists: [Artist]?
+            let externalMetadata: ExternalMetadata?
+            enum CodingKeys: String, CodingKey {
+                case title, artists
+                case externalMetadata = "external_metadata"
+            }
         }
         struct Metadata: Decodable { let music: [MusicItem]? }
         struct Status: Decodable { let code: Int; let msg: String }
@@ -212,13 +224,16 @@ final class ACRCloudRecognitionService: RecognitionService {
                 return
             }
             let artist = item.artists?.first?.name ?? "Unknown Artist"
-            let match = Match(timestamp: Date(), title: item.title, artist: artist)
+            let match = Match(
+                timestamp: Date(),
+                title: item.title,
+                artist: artist,
+                spotifyTrackId: item.externalMetadata?.spotify?.track?.id,
+                youtubeVideoId: item.externalMetadata?.youtube?.vid
+            )
             delegate?.recognitionService(self, didFind: match)
         } catch {
             print("[ACRCloud] JSON parse error: \(error)")
-            if let raw = String(data: data, encoding: .utf8) {
-                print("[ACRCloud] raw response: \(raw)")
-            }
         }
     }
 

@@ -5,7 +5,7 @@ final class SCKAudioCaptureService: NSObject, AudioCaptureService {
     weak var delegate: AudioCaptureDelegate?
     private var stream: SCStream?
 
-    // Private serial queue ensures SHSignatureGenerator.append calls are never concurrent.
+    // Private serial queue serializes audio buffer delivery to the recognition service.
     private let sampleQueue = DispatchQueue(
         label: "com.local.mazash.audioCapture",
         qos: .userInitiated
@@ -36,9 +36,11 @@ final class SCKAudioCaptureService: NSObject, AudioCaptureService {
             exceptingWindows: []
         )
         let stream = SCStream(filter: filter, configuration: config, delegate: self)
-        try stream.addStreamOutput(self, type: .audio, sampleHandlerQueue: sampleQueue)
+        try stream.addStreamOutput(self, type: .audio,  sampleHandlerQueue: sampleQueue)
+        try stream.addStreamOutput(self, type: .screen, sampleHandlerQueue: sampleQueue)
         try await stream.startCapture()
         self.stream = stream
+        print("[SCKAudioCaptureService] Started")
     }
 
     func stop() {
@@ -49,6 +51,9 @@ final class SCKAudioCaptureService: NSObject, AudioCaptureService {
         Task {
             do {
                 try await streamToStop?.stopCapture()
+                
+                print("[SCKAudioCaptureService] Stopped")
+
             } catch {
                 print("[SCKAudioCaptureService] stopCapture error: \(error)")
             }
