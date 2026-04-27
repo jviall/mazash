@@ -12,21 +12,16 @@ final class ACRCloudRecognitionService: RecognitionService {
     private let accessSecret: String
 
     // Accumulated interleaved Int16 PCM samples.
-    // The buffer grows up to maxAccumulationSeconds, then becomes a rolling window:
-    // the oldest audio is trimmed from the front as new audio arrives.
-    // On a match the buffer resets; on a no-match it keeps rolling so every attempt
-    // covers a fresh trailing window of up to 40 seconds.
+    // Collects up to windowSeconds of audio, then submits and resets regardless of result.
+    // Each attempt is a clean 10-second window — the size ACRCloud recommends for raw audio.
     //
-    // Audio is encoded to 320 kbps AAC (M4A) before sending — ~40 KB/s, so 40 seconds
-    // yields ~1.6 MB, well under ACRCloud's 5 MB limit.
+    // At 320 kbps AAC, 10 seconds encodes to ~40 KB — well under ACRCloud's 5 MB limit.
     private var pcmData = Data()
     private var sampleRate: Double = 48000
     private var channelCount: Int = 2
-    private var totalDuration: TimeInterval = 0      // current buffer duration (≤ maxAccumulationSeconds)
-    private var timeSinceLastAttempt: TimeInterval = 0
+    private var totalDuration: TimeInterval = 0
     private var isMatchPending = false
-    private let matchIntervalSeconds: TimeInterval = 10
-    private let maxAccumulationSeconds: TimeInterval = 40
+    private let windowSeconds: TimeInterval = 10
     private let lock = NSLock()
 
     init(host: String, accessKey: String, accessSecret: String) {
@@ -44,23 +39,11 @@ final class ACRCloudRecognitionService: RecognitionService {
         lock.lock()
         sampleRate = pcmBuffer.format.sampleRate
         channelCount = Int(pcmBuffer.format.channelCount)
-
-        pcmData.append(int16Data)
-        totalDuration += bufferDuration
-        timeSinceLastAttempt += bufferDuration
-
-        // Once the buffer exceeds the window, trim the oldest frames from the front.
-        if totalDuration > maxAccumulationSeconds {
-            let excess = totalDuration - maxAccumulationSeconds
-            let ch = channelCount
-            let bytesPerFrame = ch * MemoryLayout<Int16>.size
-            let framesToDrop = Int(excess * sampleRate)
-            let bytesToDrop = min(framesToDrop * bytesPerFrame, pcmData.count)
-            pcmData.removeFirst(bytesToDrop)
-            totalDuration = Double(pcmData.count) / (sampleRate * Double(bytesPerFrame))
+        if totalDuration < windowSeconds {
+            pcmData.append(int16Data)
         }
-
-        let shouldAttempt = timeSinceLastAttempt >= matchIntervalSeconds && !isMatchPending
+        totalDuration += bufferDuration
+        let shouldAttempt = totalDuration >= windowSeconds && !isMatchPending
         lock.unlock()
 
         if shouldAttempt { attemptMatch() }
@@ -80,7 +63,6 @@ final class ACRCloudRecognitionService: RecognitionService {
     private func resetBuffer() {
         pcmData = Data()
         totalDuration = 0
-        timeSinceLastAttempt = 0
     }
 
     private func attemptMatch() {
@@ -90,23 +72,15 @@ final class ACRCloudRecognitionService: RecognitionService {
         let capturedPCM = pcmData
         let rate = sampleRate
         let channels = channelCount
-        let duration = totalDuration
-        timeSinceLastAttempt = 0
+        resetBuffer()
         lock.unlock()
 
-        print("[ACRCloud] attempting match with \(String(format: "%.1f", duration))s window")
+        print("[ACRCloud] submitting \(String(format: "%.1f", windowSeconds))s window")
         Task { await identify(pcmData: capturedPCM, sampleRate: rate, channels: channels) }
     }
 
     private func clearPending() {
         lock.lock()
-        isMatchPending = false
-        lock.unlock()
-    }
-
-    private func clearPendingAndResetBuffer() {
-        lock.lock()
-        resetBuffer()
         isMatchPending = false
         lock.unlock()
     }
@@ -154,8 +128,8 @@ final class ACRCloudRecognitionService: RecognitionService {
 
         do {
             let (data, _) = try await URLSession.shared.data(for: request)
-            let matched = handleResponse(data: data)
-            if matched { clearPendingAndResetBuffer() } else { clearPending() }
+            handleResponse(data: data)
+            clearPending()
         } catch {
             print("[ACRCloud] request failed: \(error)")
             clearPending()
@@ -220,9 +194,7 @@ final class ACRCloudRecognitionService: RecognitionService {
 
     // MARK: - Response parsing
 
-    // Returns true if a match was found (caller should reset the buffer).
-    @discardableResult
-    private func handleResponse(data: Data) -> Bool {
+    private func handleResponse(data: Data) {
         struct Artist: Decodable { let name: String }
         struct MusicItem: Decodable {
             let title: String
@@ -237,18 +209,16 @@ final class ACRCloudRecognitionService: RecognitionService {
             guard response.status.code == 0,
                   let item = response.metadata?.music?.first else {
                 print("[ACRCloud] no match (code \(response.status.code)): \(response.status.msg)")
-                return false
+                return
             }
             let artist = item.artists?.first?.name ?? "Unknown Artist"
             let match = Match(timestamp: Date(), title: item.title, artist: artist)
             delegate?.recognitionService(self, didFind: match)
-            return true
         } catch {
             print("[ACRCloud] JSON parse error: \(error)")
             if let raw = String(data: data, encoding: .utf8) {
                 print("[ACRCloud] raw response: \(raw)")
             }
-            return false
         }
     }
 
