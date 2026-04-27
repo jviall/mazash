@@ -58,7 +58,7 @@ final class AppController: AudioCaptureDelegate, RecognitionDelegate {
             store.writeSessionStart()
         } catch {
             isListening = false
-            print("Failed to start capture: \(error)")
+            log("Failed to start capture: \(error)")
         }
     }
 
@@ -75,7 +75,7 @@ final class AppController: AudioCaptureDelegate, RecognitionDelegate {
     }
 
     nonisolated func audioCaptureService(_ service: any AudioCaptureService, didFailWith error: Error) {
-        print("Capture error: \(error)")
+        log("Capture error: \(error)")
         Task { @MainActor in self.isListening = false }
     }
 

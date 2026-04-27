@@ -17,17 +17,9 @@ struct Match {
     }
 
     var formattedLine: String {
-        var parts = ["\(Self.lineFormatter.string(from: timestamp)) | \(title) - \(artist)"]
+        var parts = ["\(Formatters.timestamp.string(from: timestamp)) | \(title) - \(artist)"]
         if let id = spotifyTrackId  { parts.append("spotify:\(id)") }
         if let id = youtubeVideoId  { parts.append("youtube:\(id)") }
         return parts.joined(separator: " | ")
     }
-
-    // Uses local time (TimeZone.current) intentionally — matches are displayed in the user's timezone.
-    private static let lineFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "yyyy-MM-dd HH:mm"
-        return f
-    }()
 }

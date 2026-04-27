@@ -70,7 +70,7 @@ final class SpotifyService {
               let verifier = pendingVerifier else {
             // macOS may deliver the callback URL more than once; ignore duplicates silently.
             if authState == .authenticating {
-                print("[Spotify] callback URL invalid or state mismatch — aborting auth")
+                log("[Spotify] callback URL invalid or state mismatch — aborting auth")
                 authState = .disconnected
             }
             return
@@ -90,14 +90,14 @@ final class SpotifyService {
     /// Adds the track to the configured playlist, silently skipping known duplicates.
     func addTrack(spotifyId: String, label: String) async {
         guard !playlistTrackIds.contains(spotifyId) else {
-            print("[Spotify] duplicate, skipping \"\(label)\"")
+            log("[Spotify] duplicate, skipping \"\(label)\"")
             return
         }
         guard let token = await validToken() else {
             return
         }
 
-        let url = URL(string: "https://api.spotify.com/v1/playlists/\(playlistId)/tracks")!
+        let url = URL(string: "https://api.spotify.com/v1/playlists/\(playlistId)/items")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
@@ -108,13 +108,13 @@ final class SpotifyService {
             let (data, response) = try await URLSession.shared.data(for: request)
             if let http = response as? HTTPURLResponse, http.statusCode == 201 {
                 playlistTrackIds.insert(spotifyId)
-                print("[Spotify] added \"\(label)\" to playlist")
+                log("[Spotify] added \"\(label)\" to playlist")
             } else {
                 let body = String(data: data, encoding: .utf8) ?? "<unreadable>"
-                print("[Spotify] add failed (\((response as? HTTPURLResponse)?.statusCode ?? -1)): \(body)")
+                log("[Spotify] add failed (\((response as? HTTPURLResponse)?.statusCode ?? -1)): \(body)")
             }
         } catch {
-            print("[Spotify] add error: \(error)")
+            log("[Spotify] add error: \(error)")
         }
     }
 
@@ -123,16 +123,16 @@ final class SpotifyService {
     private func fetchPlaylistTracks() async {
         guard let token = await validToken() else { return }
 
-        struct TrackItem: Decodable {
+        struct PlaylistItem: Decodable {
             struct Track: Decodable { let id: String? }
-            let track: Track?
+            let item: Track?   // null for unavailable tracks and local files
         }
         struct Page: Decodable {
-            let items: [TrackItem]
+            let items: [PlaylistItem]
             let next: String?
         }
 
-        var urlString = "https://api.spotify.com/v1/playlists/\(playlistId)/tracks?fields=items(track(id)),next&limit=100"
+        var urlString = "https://api.spotify.com/v1/playlists/\(playlistId)/items?limit=50"
         var ids = Set<String>()
 
         while let url = URL(string: urlString) {
@@ -140,15 +140,15 @@ final class SpotifyService {
             request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
             guard let (data, _) = try? await URLSession.shared.data(for: request),
                   let page = try? JSONDecoder().decode(Page.self, from: data) else { break }
-            for item in page.items {
-                if let id = item.track?.id { ids.insert(id) }
+            for entry in page.items {
+                if let id = entry.item?.id { ids.insert(id) }
             }
             guard let next = page.next else { break }
             urlString = next
         }
 
         playlistTrackIds = ids
-        print("[Spotify] loaded \(ids.count) track(s) from playlist")
+        log("[Spotify] loaded \(ids.count) track(s) from playlist")
     }
 
     private func fetchDisplayName() async {
@@ -222,7 +222,7 @@ final class SpotifyService {
             UserDefaults.standard.set(expiry, forKey: TokenKey.expiry.rawValue)
             return r.access_token
         } catch {
-            print("[Spotify] token exchange failed: \(error)")
+            log("[Spotify] token exchange failed: \(error)")
             return nil
         }
     }

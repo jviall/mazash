@@ -40,7 +40,7 @@ final class SCKAudioCaptureService: NSObject, AudioCaptureService {
         try stream.addStreamOutput(self, type: .screen, sampleHandlerQueue: sampleQueue)
         try await stream.startCapture()
         self.stream = stream
-        print("[SCKAudioCaptureService] Started")
+        log("[SCKAudioCaptureService] Started")
     }
 
     func stop() {
@@ -52,10 +52,10 @@ final class SCKAudioCaptureService: NSObject, AudioCaptureService {
             do {
                 try await streamToStop?.stopCapture()
                 
-                print("[SCKAudioCaptureService] Stopped")
+                log("[SCKAudioCaptureService] Stopped")
 
             } catch {
-                print("[SCKAudioCaptureService] stopCapture error: \(error)")
+                log("[SCKAudioCaptureService] stopCapture error: \(error)")
             }
         }
     }

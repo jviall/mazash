@@ -13,20 +13,6 @@ final class MatchStore {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
             .appendingPathComponent("mazash")
 
-    private static let fileDateFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "yyyy-MM-dd"
-        return f
-    }()
-
-    private static let sessionStartFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "en_US_POSIX")
-        f.dateFormat = "yyyy-MM-dd HH:mm:ss"
-        return f
-    }()
-
     init(directory: URL = MatchStore.defaultDirectory) {
         self.directory = directory
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -35,7 +21,7 @@ final class MatchStore {
     var lastMatch: Match? { matches.last }
 
     func writeSessionStart() {
-        let line = "--- \(Self.sessionStartFormatter.string(from: Date())) listening started ---\n"
+        let line = "--- \(Formatters.timestamp.string(from: Date())) listening started ---\n"
         guard let data = line.data(using: .utf8) else { return }
         lastWrittenKey = nil  // fresh session — always write the first match
         let url = fileURL(for: Date())
@@ -47,7 +33,7 @@ final class MatchStore {
         } catch CocoaError.fileNoSuchFile {
             try? data.write(to: url, options: .atomic)
         } catch {
-            print("MatchStore: failed to write session start — \(error)")
+            log("MatchStore: failed to write session start — \(error)")
         }
     }
 
@@ -58,13 +44,13 @@ final class MatchStore {
             appendToFile(match)
             lastWrittenKey = key
         }
-        print("[Match] \(match.title) — \(match.artist)\(match.spotifyTrackId.map { " (Spotify: \($0))" } ?? "")")
+        log("[Match] \(match.title) — \(match.artist)\(match.spotifyTrackId.map { " (Spotify: \($0))" } ?? "")")
     }
 
     // MARK: - Private
 
     private func fileURL(for date: Date) -> URL {
-        let name = "matches-\(Self.fileDateFormatter.string(from: date)).txt"
+        let name = "matches-\(Formatters.fileDate.string(from: date)).txt"
         return directory.appendingPathComponent(name)
     }
 
@@ -81,7 +67,7 @@ final class MatchStore {
         } catch CocoaError.fileNoSuchFile {
             try? data.write(to: url, options: .atomic)
         } catch {
-            print("MatchStore: failed to write match — \(error)")
+            log("MatchStore: failed to write match — \(error)")
         }
     }
 }

@@ -75,7 +75,7 @@ final class ACRCloudRecognitionService: RecognitionService {
         resetBuffer()
         lock.unlock()
 
-        print("[ACRCloud] submitting \(String(format: "%.1f", windowSeconds))s window")
+        log("[ACRCloud] submitting \(String(format: "%.1f", windowSeconds))s window")
         Task { await identify(pcmData: capturedPCM, sampleRate: rate, channels: channels) }
     }
 
@@ -90,7 +90,7 @@ final class ACRCloudRecognitionService: RecognitionService {
         do {
             audioData = try encodeAsAAC(pcmData: pcmData, sampleRate: sampleRate, channels: channels)
         } catch {
-            print("[ACRCloud] AAC encoding failed: \(error)")
+            log("[ACRCloud] AAC encoding failed: \(error)")
             clearPending()
             return
         }
@@ -131,7 +131,7 @@ final class ACRCloudRecognitionService: RecognitionService {
             handleResponse(data: data)
             clearPending()
         } catch {
-            print("[ACRCloud] request failed: \(error)")
+            log("[ACRCloud] request failed: \(error)")
             clearPending()
         }
     }
@@ -220,7 +220,7 @@ final class ACRCloudRecognitionService: RecognitionService {
             let response = try JSONDecoder().decode(Response.self, from: data)
             guard response.status.code == 0,
                   let item = response.metadata?.music?.first else {
-                print("[ACRCloud] no match (code \(response.status.code)): \(response.status.msg)")
+                log("[ACRCloud] no match (code \(response.status.code)): \(response.status.msg)")
                 return
             }
             let artist = item.artists?.first?.name ?? "Unknown Artist"
@@ -233,7 +233,7 @@ final class ACRCloudRecognitionService: RecognitionService {
             )
             delegate?.recognitionService(self, didFind: match)
         } catch {
-            print("[ACRCloud] JSON parse error: \(error)")
+            log("[ACRCloud] JSON parse error: \(error)")
         }
     }
 
