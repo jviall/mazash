@@ -20,6 +20,9 @@ final class SpotifyService {
     private var pendingVerifier: String?
     private var pendingOAuthState: String?
 
+    // Track IDs already in the playlist, populated on connect.
+    private var playlistTrackIds = Set<String>()
+
     // MARK: - Init
 
     init(clientId: String, playlistId: String) {
@@ -27,7 +30,11 @@ final class SpotifyService {
         self.playlistId = playlistId
         if loadToken(key: .accessToken) != nil {
             authState = .connected
-            Task { await fetchDisplayName() }
+            Task {
+                async let name: () = fetchDisplayName()
+                async let tracks: () = fetchPlaylistTracks()
+                await name; await tracks
+            }
         }
     }
 
@@ -48,7 +55,7 @@ final class SpotifyService {
             URLQueryItem(name: "redirect_uri",          value: redirectURI),
             URLQueryItem(name: "code_challenge_method", value: "S256"),
             URLQueryItem(name: "code_challenge",        value: challenge),
-            URLQueryItem(name: "scope",                 value: "playlist-modify-public playlist-modify-private"),
+            URLQueryItem(name: "scope",                 value: "playlist-modify-public playlist-modify-private playlist-read-private"),
             URLQueryItem(name: "state",                 value: state),
         ]
         NSWorkspace.shared.open(components.url!)
@@ -77,16 +84,16 @@ final class SpotifyService {
         deleteTokens()
         authState = .disconnected
         userName = nil
+        playlistTrackIds = []
     }
 
     /// Adds the track to the configured playlist, silently skipping known duplicates.
     func addTrack(spotifyId: String, label: String) async {
-        guard !isDuplicate(spotifyId) else {
+        guard !playlistTrackIds.contains(spotifyId) else {
             print("[Spotify] duplicate, skipping \"\(label)\"")
             return
         }
         guard let token = await validToken() else {
-            print("[Spotify] no valid token — cannot add track")
             return
         }
 
@@ -100,7 +107,7 @@ final class SpotifyService {
         do {
             let (data, response) = try await URLSession.shared.data(for: request)
             if let http = response as? HTTPURLResponse, http.statusCode == 201 {
-                markAdded(spotifyId)
+                playlistTrackIds.insert(spotifyId)
                 print("[Spotify] added \"\(label)\" to playlist")
             } else {
                 let body = String(data: data, encoding: .utf8) ?? "<unreadable>"
@@ -111,21 +118,38 @@ final class SpotifyService {
         }
     }
 
-    // MARK: - Duplicate tracking
-
-    private static let addedKey = "spotify_added_track_ids"
-
-    private func isDuplicate(_ id: String) -> Bool {
-        (UserDefaults.standard.stringArray(forKey: Self.addedKey) ?? []).contains(id)
-    }
-
-    private func markAdded(_ id: String) {
-        var ids = UserDefaults.standard.stringArray(forKey: Self.addedKey) ?? []
-        ids.append(id)
-        UserDefaults.standard.set(ids, forKey: Self.addedKey)
-    }
-
     // MARK: - Token management
+
+    private func fetchPlaylistTracks() async {
+        guard let token = await validToken() else { return }
+
+        struct TrackItem: Decodable {
+            struct Track: Decodable { let id: String? }
+            let track: Track?
+        }
+        struct Page: Decodable {
+            let items: [TrackItem]
+            let next: String?
+        }
+
+        var urlString = "https://api.spotify.com/v1/playlists/\(playlistId)/tracks?fields=items(track(id)),next&limit=100"
+        var ids = Set<String>()
+
+        while let url = URL(string: urlString) {
+            var request = URLRequest(url: url)
+            request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+            guard let (data, _) = try? await URLSession.shared.data(for: request),
+                  let page = try? JSONDecoder().decode(Page.self, from: data) else { break }
+            for item in page.items {
+                if let id = item.track?.id { ids.insert(id) }
+            }
+            guard let next = page.next else { break }
+            urlString = next
+        }
+
+        playlistTrackIds = ids
+        print("[Spotify] loaded \(ids.count) track(s) from playlist")
+    }
 
     private func fetchDisplayName() async {
         guard let token = await validToken() else { return }
@@ -166,7 +190,9 @@ final class SpotifyService {
         ].joined(separator: "&")
         if await exchangeTokens(body: body) != nil {
             authState = .connected
-            await fetchDisplayName()
+            async let name: () = fetchDisplayName()
+            async let tracks: () = fetchPlaylistTracks()
+            await name; await tracks
         } else {
             authState = .disconnected
         }

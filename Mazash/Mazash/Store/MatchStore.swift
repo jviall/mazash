@@ -20,6 +20,13 @@ final class MatchStore {
         return f
     }()
 
+    private static let sessionStartFormatter: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        return f
+    }()
+
     init(directory: URL = MatchStore.defaultDirectory) {
         self.directory = directory
         try? FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -28,7 +35,7 @@ final class MatchStore {
     var lastMatch: Match? { matches.last }
 
     func writeSessionStart() {
-        let line = "--- \(Self.fileDateFormatter.string(from: Date())) listening started ---\n"
+        let line = "--- \(Self.sessionStartFormatter.string(from: Date())) listening started ---\n"
         guard let data = line.data(using: .utf8) else { return }
         lastWrittenKey = nil  // fresh session — always write the first match
         let url = fileURL(for: Date())
